@@ -37,6 +37,7 @@
     --btn-shadow: 0 0 0 1px rgba(14, 44, 77, .08), 0 1px 2px rgba(14, 44, 77, .06);
     --btn-primary-shadow: 0 0 0 1px #0266D6, 0 1px 2px rgba(2, 117, 244, .35), inset 0 1px 0 rgba(255, 255, 255, .18);
     --badge-shadow: 0 1px 1px rgba(14, 44, 77, .04);
+    --float-shadow: 0 0 0 1px rgba(14, 44, 77, .08), 0 4px 8px rgba(14, 44, 77, .06), 0 12px 28px rgba(14, 44, 77, .14);
     --shimmer: linear-gradient(90deg, #0275F4, #1985F9 10%, #5AB0FF 18%, #3095FE 26%, #0468E0 40%, #0275F4);
 
     --gutter: clamp(24px, 4.5vw, 72px);
@@ -74,6 +75,7 @@
       --btn-shadow: 0 0 0 1px rgba(230, 238, 248, .12), 0 1px 2px rgba(0, 0, 0, .3);
       --btn-primary-shadow: 0 0 0 1px #3B8BF0, 0 1px 2px rgba(0, 0, 0, .35), inset 0 1px 0 rgba(255, 255, 255, .2);
       --badge-shadow: 0 1px 1px rgba(0, 0, 0, .2);
+      --float-shadow: 0 0 0 1px rgba(230, 238, 248, .1), 0 4px 8px rgba(0, 0, 0, .3), 0 12px 28px rgba(0, 0, 0, .45);
       --shimmer: linear-gradient(90deg, #4C9BFF, #66AAFF 10%, #A9D2FF 18%, #7DB9FF 26%, #3A8AF2 40%, #4C9BFF);
 
       color-scheme: dark;
@@ -202,7 +204,7 @@
   /* Lembar bergaris: area kerja + baris pelajaran */
   .sheet {
     display: grid;
-    grid-template-rows: minmax(0, 1fr) auto;
+    grid-template-rows: minmax(0, 1fr);
     gap: 1px;
     background: var(--line);
     border: 1px solid var(--line);
@@ -221,9 +223,6 @@
   .side > .fill { flex: 1 1 auto; }
   .side > .soft { background: var(--bg2); }
 
-  .cells { display: grid; gap: 1px; background: var(--line); }
-  .cells > * { background: var(--bg); min-width: 0; }
-  .cells-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 
   .cell { padding: 16px 20px; display: grid; gap: 8px; align-content: start; }
   .cell-title {
@@ -238,10 +237,6 @@
   }
   .cell p { font-size: 14px; color: var(--muted); letter-spacing: -0.01em; }
   .cell-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
-  .lesson { padding: 10px 20px; gap: 2px; }
-  .lesson .cell-title { font-size: 14px; }
-  .lesson p { font-size: 13px; line-height: 1.45; }
-  .lesson .course { font-size: 13px; font-weight: 600; color: var(--heading); }
   .label { font-size: 12px; font-weight: 500; letter-spacing: 0; color: var(--muted); }
   .note { font-size: 12px; color: var(--muted); letter-spacing: 0; }
   .num-chip {
@@ -477,20 +472,77 @@
   .klass .viol { display: none; flex: 0 0 auto; font-size: 11px; min-height: 18px; padding: 0 5px; gap: 3px; }
   .klass .viol .ico { width: 11px; height: 11px; }
   .klass.is-bad .viol { display: inline-flex; }
-  .klass select {
+  .dd-btn {
     flex: 0 0 auto;
-    width: 92px;
-    min-height: 28px;
-    padding: 2px 6px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+    width: 96px;
+    height: 28px;
+    padding: 0 6px 0 9px;
     border: 0;
     border-radius: 7px;
     background: var(--surface);
     box-shadow: inset 0 0 0 1px var(--line-strong);
     font-size: 12px;
+    font-weight: 500;
     color: var(--heading);
+    white-space: nowrap;
+    cursor: pointer;
+    transition: box-shadow .15s ease, background-color .15s ease;
+  }
+  .dd-btn:hover { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--blue) 55%, var(--line-strong)); }
+  .dd-btn[aria-expanded="true"] { box-shadow: inset 0 0 0 1px var(--blue), 0 0 0 3px var(--focus); }
+  .dd-btn:focus-visible { box-shadow: inset 0 0 0 1px var(--blue), 0 0 0 3px var(--focus); border-radius: 7px; }
+  .dd-btn:disabled { opacity: .5; cursor: not-allowed; }
+  .dd-btn .ico { width: 14px; height: 14px; color: var(--muted); transition: transform .2s var(--ease-out); }
+  .dd-btn[aria-expanded="true"] .ico { transform: rotate(180deg); color: var(--blue); }
+
+  .dd-pop {
+    position: fixed;
+    z-index: 50;
+    width: 220px;
+    padding: 4px;
+    border-radius: 12px;
+    background: var(--surface);
+    box-shadow: var(--float-shadow);
+    transform-origin: top right;
+    animation: ddIn .16s var(--ease-out);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+  .dd-pop.is-up { transform-origin: bottom right; }
+  .dd-pop:focus-visible { box-shadow: var(--float-shadow); border-radius: 12px; }
+  @keyframes ddIn { from { opacity: 0; transform: translateY(-4px) scale(.98); } }
+  .dd-pop.is-up { animation-name: ddInUp; }
+  @keyframes ddInUp { from { opacity: 0; transform: translateY(4px) scale(.98); } }
+  .dd-title { padding: 6px 10px 4px; font-size: 11px; font-weight: 500; color: var(--muted); letter-spacing: 0; }
+  .dd-day { padding: 8px 10px 2px; font-size: 11px; font-weight: 600; color: var(--heading); letter-spacing: 0; border-top: 1px solid var(--line); margin-top: 4px; }
+  .dd-day:first-of-type { border-top: 0; margin-top: 0; }
+  .dd-opt {
+    display: grid;
+    grid-template-columns: 16px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 8px;
+    min-height: 34px;
+    padding: 0 10px 0 8px;
+    border-radius: 8px;
+    font-size: 13px;
+    color: var(--ink);
     cursor: pointer;
   }
-  .klass select:focus-visible { box-shadow: inset 0 0 0 1px var(--blue), 0 0 0 3px var(--focus); border-radius: 7px; }
+  .dd-opt .ico { width: 14px; height: 14px; color: var(--blue); visibility: hidden; }
+  .dd-opt[aria-selected="true"] { color: var(--blue); font-weight: 500; }
+  .dd-opt[aria-selected="true"] .ico { visibility: visible; }
+  .dd-opt.is-active { background: var(--bg2); box-shadow: inset 0 0 0 1px var(--line); }
+  .dd-opt small { font-size: 11px; font-weight: 400; color: var(--muted); }
+  .dd-rooms { display: inline-flex; align-items: center; gap: 3px; }
+  .dd-rooms i { width: 8px; height: 12px; border-radius: 2px; background: var(--bg2); box-shadow: inset 0 0 0 1px var(--line-strong); }
+  .dd-rooms i.on { background: var(--blue); box-shadow: inset 0 0 0 1px var(--blue); }
+  .dd-opt.is-over .dd-rooms i.on { background: var(--red); box-shadow: inset 0 0 0 1px var(--red); }
+  .dd-rooms em { margin-left: 4px; font-style: normal; font-size: 11px; color: var(--muted); }
+  .dd-opt.is-over .dd-rooms em { color: var(--red); }
 
   .checklist { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
   .ck { display: grid; gap: 2px; padding: 4px 10px; border-radius: 9px; background: var(--bg2); box-shadow: inset 0 0 0 1px var(--line); }
@@ -502,6 +554,56 @@
   .ck-viol li { font-size: 11.5px; color: var(--red); line-height: 1.4; letter-spacing: 0; }
 
   /* ---------- Rekomendasi ---------- */
+  .method-switch {
+    grid-column: 2; grid-row: 2; justify-self: end;
+    display: inline-flex; gap: 2px; padding: 3px;
+    border-radius: 10px;
+    background: var(--bg2);
+    box-shadow: inset 0 0 0 1px var(--line);
+  }
+  .method-switch a {
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 13px; font-weight: 500;
+    color: var(--muted);
+    text-decoration: none;
+    white-space: nowrap;
+    transition: background-color .15s ease, color .15s ease;
+  }
+  .method-switch a:hover { color: var(--heading); }
+  .method-switch a[aria-current="true"] { background: var(--surface); color: var(--heading); box-shadow: var(--item-shadow); }
+  .method-switch a:focus-visible { border-radius: 8px; }
+  .page-head.has-switch p { grid-column: 1; grid-row: 2; }
+
+  .pref-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 4px 12px; padding: 6px 0; border-top: 1px solid var(--line); }
+  .pref-row:first-child { border-top: 0; padding-top: 0; }
+  .pref-name { flex: 1 1 100px; min-width: 0; display: grid; }
+  .pref-name b { font-size: 14px; font-weight: 500; color: var(--heading); }
+  .pref-name small { font-size: 11.5px; color: var(--muted); letter-spacing: 0; line-height: 1.35; }
+  .tri { display: inline-flex; padding: 2px; gap: 2px; border-radius: 9px; background: var(--bg2); box-shadow: inset 0 0 0 1px var(--line); }
+  .tri button {
+    min-width: 50px; height: 28px; padding: 0 8px;
+    border: 0; border-radius: 7px;
+    background: transparent; color: var(--muted);
+    font-size: 12px; font-weight: 500; cursor: pointer;
+    transition: background-color .12s ease, color .12s ease;
+  }
+  .tri button:hover { color: var(--heading); }
+  .tri button[aria-checked="true"] { background: var(--blue); color: var(--on-blue); }
+  .tri button[aria-checked="true"][data-v="0"] { background: var(--surface); color: var(--heading); box-shadow: var(--item-shadow); }
+  .tri button:focus-visible { border-radius: 7px; }
+
+  .prof-bars { display: grid; gap: 0; }
+  .prof-row { display: grid; grid-template-columns: 92px minmax(0, 1fr) 30px; align-items: center; gap: 8px; height: 34px; }
+  .prof-row .sim-val { font-weight: 500; color: var(--heading); }
+  .prof-axis { display: grid; grid-template-columns: 92px minmax(0, 1fr) 30px; gap: 8px; font-size: 11px; color: var(--muted); letter-spacing: 0; }
+  .prof-axis span:nth-child(2) { display: flex; justify-content: space-between; }
+
+  .preds.preds-tall { height: calc(4 * 62px - 6px); }
+  .pred.pred-tall { height: 56px; grid-template-columns: minmax(0, 1fr) 56px 38px; }
+  .pred-tall .pred-name { display: grid; white-space: normal; }
+  .pred-tall .pred-name b { font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .pred-tall .pred-name small { font-size: 11.5px; font-weight: 400; color: var(--muted); letter-spacing: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .rate-list { display: grid; }
   .rate-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 4px 12px; padding: 3px 0; border-top: 1px solid var(--line); }
   .rate-row:first-child { border-top: 0; padding-top: 0; }
@@ -651,7 +753,8 @@
     .page-head { grid-template-columns: minmax(0, 1fr); gap: 8px; }
     .page-head .badge { grid-column: 1; grid-row: 1; justify-self: start; }
     .page-head h1 { grid-row: 2; font-size: clamp(24px, 4.2vw, 32px); text-wrap: balance; }
-    .page-head p { grid-row: 3; }
+    .page-head p, .page-head.has-switch p { grid-column: 1; grid-row: 3; }
+    .method-switch { grid-column: 1; grid-row: 4; justify-self: start; }
 
     .work-21 { grid-template-columns: minmax(0, 1fr); }
     .work-111 { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
@@ -662,13 +765,12 @@
     .work-32, .work-111 { grid-template-columns: minmax(0, 1fr); }
     .work-111 > .side { grid-column: auto; display: flex; }
     .work-111 > .side > .soft { grid-row: auto; }
-    .cells-3 { grid-template-columns: minmax(0, 1fr); }
   }
   @media (max-width: 560px) {
     :root { --gutter: 16px; }
     .main { padding-top: 20px; }
     .pane { padding: 14px; }
-    .cell, .lesson { padding: 14px 16px; }
+    .cell { padding: 14px 16px; }
     .scores > div, .scores-3 > div { padding: 12px 14px; }
     .score-value { font-size: 24px; }
     .scores-3 .score-value { font-size: 22px; }
@@ -700,7 +802,7 @@
   <nav class="side-nav" aria-label="Simulasi">
     <a class="side-link" href="#rute" data-tab="rute"><i class="ico" data-icon="route"></i><span><b class="full">Rute pengiriman</b><b class="short">Rute</b><small>Capacitated VRP</small></span></a>
     <a class="side-link" href="#jadwal" data-tab="jadwal"><i class="ico" data-icon="calendar"></i><span><b class="full">Penjadwalan kuliah</b><b class="short">Jadwal</b><small>Scheduling problem</small></span></a>
-    <a class="side-link" href="#rekomendasi" data-tab="rekomendasi"><i class="ico" data-icon="users"></i><span><b class="full">Sistem rekomendasi</b><b class="short">Rekomendasi</b><small>Collaborative filtering</small></span></a>
+    <a class="side-link" href="#rekomendasi-konten" data-tab="rekomendasi"><i class="ico" data-icon="users"></i><span><b class="full">Sistem rekomendasi</b><b class="short">Rekomendasi</b><small>Content-based &amp; collaborative</small></span></a>
   </nav>
   <div class="side-foot">
     <button class="btn btn-sm btn-block btn-reset" id="resetAll" type="button" aria-label="Reset semua simulasi"><i class="ico" data-icon="refresh"></i><span class="btn-text">Reset semua</span></button>
@@ -791,20 +893,6 @@
       </div>
     </div>
 
-    <div class="cells cells-3">
-      <div class="cell lesson">
-        <span class="cell-title"><i class="ico" data-icon="scale"></i>Eksak dan heuristik</span>
-        <p>Metode eksak menjamin solusi optimal dengan waktu yang dapat eksponensial; heuristik cepat dan cukup baik.</p>
-      </div>
-      <div class="cell lesson">
-        <span class="cell-title"><i class="ico" data-icon="route"></i>Savings dan 2-opt</span>
-        <p>Savings menggabungkan trip paling hemat jarak; 2-opt menghilangkan jalur yang bersilangan.</p>
-      </div>
-      <div class="cell lesson">
-        <span class="cell-title"><i class="ico" data-icon="book"></i>Pemodelan dan Analitika Preskriptif</span>
-        <p>Dipelajari di mata kuliah ini. Lanjutan: tabu search, simulated annealing, hyper-heuristics.</p>
-      </div>
-    </div>
   </div>
 </section>
 
@@ -864,29 +952,89 @@
       </div>
     </div>
 
-    <div class="cells cells-3">
-      <div class="cell lesson">
-        <span class="cell-title"><i class="ico" data-icon="list"></i>Constraint satisfaction</span>
-        <p>Setiap kelas adalah variabel yang diberi slot tanpa melanggar constraint, sejalan dengan Struktur Diskrit.</p>
+  </div>
+</section>
+
+<!-- ======================= REKOMENDASI: CONTENT-BASED ======================= -->
+<section class="page" data-panel="rekomendasi-konten" aria-labelledby="h-cbf" hidden>
+  <header class="page-head has-switch">
+    <h1 id="h-cbf">Rekomendasi dari <span class="shimmer">kemiripan fitur</span></h1>
+    <span class="badge"><i class="ico" data-icon="tag"></i>Content-based filtering</span>
+    <p>Profil selera dibangun dari fitur makanan yang Anda sukai, lalu dicocokkan dengan makanan lain menggunakan cosine similarity.</p>
+    <nav class="method-switch" aria-label="Metode rekomendasi">
+      <a href="#rekomendasi-konten" data-sub="rekomendasi-konten">Content-based</a>
+      <a href="#rekomendasi-kolaboratif" data-sub="rekomendasi-kolaboratif">Collaborative</a>
+    </nav>
+  </header>
+
+  <div class="sheet">
+    <div class="work work-111">
+      <div class="pane">
+        <div class="card">
+          <div class="card-head">
+            <h2><i class="ico" data-icon="star"></i>Preferensi Anda</h2>
+            <span class="note">beserta fitur tiap makanan</span>
+          </div>
+          <div class="card-body">
+            <div id="prefList"></div>
+          </div>
+        </div>
       </div>
-      <div class="cell lesson">
-        <span class="cell-title"><i class="ico" data-icon="zap"></i>Pemangkasan ruang solusi</span>
-        <p>Backtracking memotong cabang yang melanggar; MRV mendahulukan kelas dengan pilihan slot paling sedikit.</p>
+
+      <div class="pane">
+        <div class="card">
+          <div class="card-head">
+            <h2><i class="ico" data-icon="sliders"></i>Profil selera Anda</h2>
+            <span class="note">bobot per fitur</span>
+          </div>
+          <div class="card-body">
+            <div class="prof-bars" id="profBars" role="list"></div>
+            <div class="prof-axis" aria-hidden="true"><span></span><span><span>tidak disukai</span><span>disukai</span></span><span></span></div>
+          </div>
+        </div>
+        <p class="note">Bobot fitur = jumlah kemunculan fitur pada makanan yang disukai dikurangi pada makanan yang tidak disukai. Data fitur merupakan contoh.</p>
       </div>
-      <div class="cell lesson">
-        <span class="cell-title"><i class="ico" data-icon="book"></i>Pemodelan dan Analitika Preskriptif; Komputasi Lunak</span>
-        <p>Dipelajari di kedua mata kuliah ini. Skala besar: tabu search, simulated annealing, algoritma genetika.</p>
+
+      <div class="side">
+        <div class="cell soft">
+          <div class="card">
+            <div class="card-head">
+              <h2><i class="ico" data-icon="target"></i>Rekomendasi untuk Anda</h2>
+              <span class="note">cosine similarity</span>
+            </div>
+            <div class="card-body">
+              <ol class="preds preds-tall" id="cbfRecs"></ol>
+              <div class="cold" id="cbfCold" hidden><i class="ico" data-icon="alert"></i><span>Profil selera masih kosong. Tandai minimal satu makanan sebagai Suka atau Tidak.</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="cell">
+          <span class="cell-title"><i class="ico" data-icon="help"></i>Mengapa?</span>
+          <p id="cbfWhy" aria-live="polite"></p>
+        </div>
+        <div class="cell fill">
+          <span class="cell-title"><i class="ico" data-icon="sigma"></i>Rumus</span>
+          <div class="formula" aria-label="kecocokan j sama dengan p dot f j dibagi panjang p kali panjang f j">
+            <span>cos(<i>p</i>, <i>f<sub>j</sub></i>)</span><span class="up">=</span>
+            <span class="frac"><span><i>p</i> · <i>f<sub>j</sub></i></span><span>‖<i>p</i>‖ ‖<i>f<sub>j</sub></i>‖</span></span>
+          </div>
+          <p class="note">Nilai 1 berarti fitur makanan searah dengan profil Anda; nilai negatif berarti didominasi fitur yang tidak Anda sukai.</p>
+        </div>
       </div>
     </div>
   </div>
 </section>
 
 <!-- ======================= REKOMENDASI ======================= -->
-<section class="page" data-panel="rekomendasi" aria-labelledby="h-rek" hidden>
-  <header class="page-head">
+<section class="page" data-panel="rekomendasi-kolaboratif" aria-labelledby="h-rek" hidden>
+  <header class="page-head has-switch">
     <h1 id="h-rek">Prediksi selera dari <span class="shimmer">pola rating</span></h1>
     <span class="badge"><i class="ico" data-icon="users"></i>User-based collaborative filtering</span>
     <p>Korelasi Pearson mengukur kemiripan rating Anda dengan pengguna lain untuk memprediksi rating makanan yang belum Anda coba.</p>
+    <nav class="method-switch" aria-label="Metode rekomendasi">
+      <a href="#rekomendasi-konten" data-sub="rekomendasi-konten">Content-based</a>
+      <a href="#rekomendasi-kolaboratif" data-sub="rekomendasi-kolaboratif">Collaborative</a>
+    </nav>
   </header>
 
   <div class="sheet">
@@ -950,20 +1098,6 @@
       </div>
     </div>
 
-    <div class="cells cells-3">
-      <div class="cell lesson">
-        <span class="cell-title"><i class="ico" data-icon="trend"></i>Kemiripan sebagai korelasi</span>
-        <p>Sistem tidak mengenal rasa makanan, hanya pola rating yang searah antarpengguna.</p>
-      </div>
-      <div class="cell lesson">
-        <span class="cell-title"><i class="ico" data-icon="alert"></i>Tantangan nyata</span>
-        <p>Cold start, sparsity, dan skala jutaan pengguna dihadapi Netflix, Spotify, dan marketplace.</p>
-      </div>
-      <div class="cell lesson">
-        <span class="cell-title"><i class="ico" data-icon="book"></i>Pemodelan Sistem Kognitif</span>
-        <p>Dipelajari di mata kuliah ini. Turut dibahas: sistem pakar, representasi pengetahuan, NLP.</p>
-      </div>
-    </div>
   </div>
 </section>
 
@@ -994,6 +1128,8 @@
     users: '<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18 14.5a6.5 6.5 0 0 1 3.5 5.5"/>',
     route: '<circle cx="6" cy="19" r="2.5"/><circle cx="18" cy="5" r="2.5"/><path d="M8.5 19H16a3.5 3.5 0 0 0 0-7H8a3.5 3.5 0 0 1 0-7h7.5"/>',
     check: '<circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/>',
+    chevron: '<path d="m6 9 6 6 6-6"/>',
+    tick: '<path d="m5 12.5 4.5 4.5L19 7.5"/>',
     target: '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/>',
     alert: '<path d="M12 3 2 20h20L12 3Z"/><path d="M12 10v4M12 17h.01"/>',
     monitor: '<rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/>',
@@ -1007,6 +1143,8 @@
     calendar: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>',
     trend: '<path d="m3 17 6-6 4 4 8-8"/><path d="M15 7h6v6"/>',
     list: '<path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/>',
+    tag: '<path d="M3 12V4a1 1 0 0 1 1-1h8l9 9-9 9-9-9Z"/><circle cx="7.5" cy="7.5" r="1.5"/>',
+    sliders: '<path d="M4 6h9M17 6h3M4 12h3M11 12h9M4 18h11M19 18h1"/><circle cx="15" cy="6" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="18" r="2"/>',
   };
   const icon = (name) => `<svg viewBox="0 0 24 24" aria-hidden="true">${ICONS[name] || ""}</svg>`;
   const hydrateIcons = (root) => root.querySelectorAll("i.ico[data-icon]").forEach((el) => {
@@ -1052,14 +1190,24 @@
   window.addEventListener("resize", fit);
 
   /* ================= Navigasi ================= */
-  const TABS = ["rute", "jadwal", "rekomendasi"];
+  const PANELS = ["rute", "jadwal", "rekomendasi-konten", "rekomendasi-kolaboratif"];
   const links = Array.from(document.querySelectorAll(".side-link"));
+  const subLinks = Array.from(document.querySelectorAll(".method-switch a"));
   function showTab(key) {
-    if (!TABS.includes(key)) key = "rute";
+    if (key === "rekomendasi") key = links.find((a) => a.dataset.tab === "rekomendasi").getAttribute("href").slice(1);
+    if (!PANELS.includes(key)) key = "rute";
+    const group = key.startsWith("rekomendasi") ? "rekomendasi" : key;
     document.querySelectorAll("[data-panel]").forEach((p) => { p.hidden = p.dataset.panel !== key; });
     links.forEach((a) => {
-      if (a.dataset.tab === key) $("mobileTitle").textContent = a.querySelector(".full").textContent;
-      if (a.dataset.tab === key) a.setAttribute("aria-current", "page");
+      const on = a.dataset.tab === group;
+      if (on) $("mobileTitle").textContent = a.querySelector(".full").textContent;
+      if (on) a.setAttribute("aria-current", "page");
+      else a.removeAttribute("aria-current");
+      // Menu rekomendasi mengingat metode terakhir yang dibuka.
+      if (on && group === "rekomendasi") a.setAttribute("href", "#" + key);
+    });
+    subLinks.forEach((a) => {
+      if (a.dataset.sub === key) a.setAttribute("aria-current", "true");
       else a.removeAttribute("aria-current");
     });
     window.scrollTo({ top: 0, behavior: "instant" });
@@ -1526,10 +1674,13 @@
     el.innerHTML =
       `<div class="k-row"><span class="k-name" title="${c.n}">${c.n}${c.lab ? `<span class="k-lab" title="Membutuhkan lab komputer"><i class="ico" data-icon="monitor"></i><span class="sr-only">, butuh lab</span></span>` : ""}</span><span class="badge badge-red viol"></span></div>` +
       `<div class="k-row"><span class="k-tags">Dosen ${c.d} · ${c.a}</span>` +
-      `<label class="sr-only" for="${id}">Pindahkan ${c.n} ke</label><select id="${id}">${SLOTS.map((sl, s) => `<option value="${s}" aria-label="${slotName(s)}">${sl.day.slice(0, 3)} ${sl.time}</option>`).join("")}</select></div>`;
+      `<button type="button" class="dd-btn" id="${id}" aria-haspopup="listbox" aria-expanded="false"><span class="dd-val"></span><i class="ico" data-icon="chevron"></i></button></div>`;
     hydrateIcons(el);
-    const sel = el.querySelector("select");
-    sel.addEventListener("change", () => userMove(i, Number(sel.value)));
+    const btn = el.querySelector(".dd-btn");
+    btn.addEventListener("click", () => (dd.owner === i ? closeDd(true) : openDd(i)));
+    btn.addEventListener("keydown", (e) => {
+      if (["ArrowDown", "ArrowUp", "Enter", " "].includes(e.key)) { e.preventDefault(); openDd(i); }
+    });
     el.addEventListener("dragstart", (e) => {
       if (J.busy) { e.preventDefault(); return; }
       dragIdx = i;
@@ -1544,6 +1695,114 @@
     });
     return el;
   });
+
+  /* Dropdown "Pindah ke": satu daftar bersama yang menempel ke tombol kartu yang dibuka. */
+  const dd = { owner: null, active: 0, el: null };
+  function buildDd(i) {
+    const pop = document.createElement("div");
+    pop.className = "dd-pop";
+    pop.id = "ddPop";
+    pop.setAttribute("role", "listbox");
+    pop.setAttribute("tabindex", "-1");
+    pop.setAttribute("aria-label", `Pindahkan ${CLS[i].n} ke`);
+    let html = `<div class="dd-title" aria-hidden="true">Pindahkan ${CLS[i].n} ke</div>`;
+    let day = "";
+    SLOTS.forEach((sl, s) => {
+      if (sl.day !== day) { day = sl.day; html += `<div class="dd-day" role="presentation">${day}</div>`; }
+      const n = J.slot.filter((x, j) => x === s && j !== i).length;
+      const cur = J.slot[i] === s;
+      // Kotak ruang menunjukkan isi slot saat ini (termasuk kelas ini bila sudah di slot tersebut).
+      const used = Math.min(n + (cur ? 1 : 0), ROOMS);
+      const cls = !cur && n >= ROOMS ? "dd-opt is-over" : "dd-opt";
+      const note = cur ? "saat ini" : n >= ROOMS ? "penuh" : `${n}/${ROOMS}`;
+      const rooms = Array.from({ length: ROOMS }, (_, k) => `<i class="${k < used ? "on" : ""}"></i>`).join("");
+      html += `<div class="${cls}" role="option" id="dd-${s}" data-s="${s}" aria-selected="${cur}">` +
+        `<i class="ico" data-icon="tick"></i><span>${sl.time}</span>` +
+        `<span class="dd-rooms" aria-label="${cur ? "slot saat ini" : `${n} dari ${ROOMS} ruang terisi`}">${rooms}<em>${note}</em></span></div>`;
+    });
+    pop.innerHTML = html;
+    hydrateIcons(pop);
+    pop.addEventListener("click", (e) => {
+      const o = e.target.closest(".dd-opt");
+      if (o) chooseDd(Number(o.dataset.s));
+    });
+    pop.addEventListener("mousemove", (e) => {
+      const o = e.target.closest(".dd-opt");
+      if (o) setActive(Number(o.dataset.s));
+    });
+    pop.addEventListener("keydown", (e) => {
+      if (e.key === "ArrowDown") { e.preventDefault(); setActive(Math.min(dd.active + 1, SLOTS.length - 1)); }
+      else if (e.key === "ArrowUp") { e.preventDefault(); setActive(Math.max(dd.active - 1, 0)); }
+      else if (e.key === "Home") { e.preventDefault(); setActive(0); }
+      else if (e.key === "End") { e.preventDefault(); setActive(SLOTS.length - 1); }
+      else if (e.key === "Enter" || e.key === " ") { e.preventDefault(); chooseDd(dd.active); }
+      else if (e.key === "Escape") { e.preventDefault(); closeDd(true); }
+      else if (e.key === "Tab") { closeDd(true); }
+    });
+    return pop;
+  }
+  function setActive(s) {
+    dd.active = s;
+    dd.el.querySelectorAll(".dd-opt").forEach((o) => o.classList.toggle("is-active", Number(o.dataset.s) === s));
+    dd.el.setAttribute("aria-activedescendant", "dd-" + s);
+    const o = dd.el.querySelector(`#dd-${s}`);
+    if (o.offsetTop < dd.el.scrollTop) dd.el.scrollTop = o.offsetTop - 4;
+    else if (o.offsetTop + o.offsetHeight > dd.el.scrollTop + dd.el.clientHeight) dd.el.scrollTop = o.offsetTop + o.offsetHeight - dd.el.clientHeight + 4;
+  }
+  function placeDd() {
+    const btn = cardEls[dd.owner].querySelector(".dd-btn");
+    const r = btn.getBoundingClientRect();
+    const vw = innerWidth / Z, vh = innerHeight / Z;
+    dd.el.style.maxHeight = "";
+    const w = dd.el.offsetWidth;
+    let h = dd.el.offsetHeight;
+    const left = Math.min(Math.max(8, r.right / Z - w), vw - w - 8);
+    const below = r.bottom / Z + 6;
+    const up = below + h > vh - 8 && r.top / Z - h - 6 > 8;
+    // Bila ruang atas dan bawah sama-sama sempit, daftar dibatasi tingginya dan bisa digulir.
+    if (!up && below + h > vh - 8) { h = Math.max(120, vh - 8 - below); dd.el.style.maxHeight = h + "px"; }
+    dd.el.classList.toggle("is-up", up);
+    dd.el.style.left = left + "px";
+    dd.el.style.top = (up ? r.top / Z - h - 6 : below) + "px";
+  }
+  function openDd(i) {
+    if (J.busy) return;
+    closeDd(false);
+    dd.owner = i;
+    dd.el = buildDd(i);
+    document.body.appendChild(dd.el);
+    const btn = cardEls[i].querySelector(".dd-btn");
+    btn.setAttribute("aria-expanded", "true");
+    btn.setAttribute("aria-controls", "ddPop");
+    setActive(J.slot[i]);
+    placeDd();
+    dd.el.focus({ preventScroll: true });
+  }
+  function closeDd(refocus) {
+    if (dd.owner === null) return;
+    const btn = cardEls[dd.owner].querySelector(".dd-btn");
+    btn.setAttribute("aria-expanded", "false");
+    btn.removeAttribute("aria-controls");
+    dd.el.remove();
+    dd.el = null;
+    dd.owner = null;
+    if (refocus) btn.focus({ preventScroll: true });
+  }
+  function chooseDd(s) {
+    const i = dd.owner;
+    closeDd(false);
+    userMove(i, s);
+    // Kartu dipindah ke slot lain di DOM, jadi fokus dikembalikan ke tombolnya.
+    cardEls[i].querySelector(".dd-btn").focus({ preventScroll: true });
+  }
+  document.addEventListener("pointerdown", (e) => {
+    if (dd.owner === null) return;
+    if (dd.el.contains(e.target) || cardEls[dd.owner].querySelector(".dd-btn").contains(e.target)) return;
+    closeDd(false);
+  });
+  window.addEventListener("resize", () => closeDd(false));
+  window.addEventListener("hashchange", () => closeDd(false));
+  document.addEventListener("scroll", (e) => { if (dd.el && !dd.el.contains(e.target)) closeDd(false); }, true);
 
   function placeCards() {
     slotEls.forEach((s, k) => CLS.forEach((_, i) => { if (J.slot[i] === k) s.list.appendChild(cardEls[i]); }));
@@ -1584,9 +1843,11 @@
       vb.title = bad ? `Melanggar constraint ${nums}` : "";
       hydrateIcons(vb);
       el.setAttribute("aria-label", `${CLS[i].n}${bad ? `, melanggar constraint ${nums}` : ""}`);
-      const sel = el.querySelector("select");
-      sel.value = String(J.slot[i]);
-      sel.disabled = J.busy;
+      const btn = el.querySelector(".dd-btn");
+      const sl = SLOTS[J.slot[i]];
+      btn.querySelector(".dd-val").textContent = `${sl.day.slice(0, 3)} ${sl.time}`;
+      btn.setAttribute("aria-label", `Pindahkan ${CLS[i].n}, saat ini ${slotName(J.slot[i])}`);
+      btn.disabled = J.busy;
       el.draggable = !J.busy;
     });
     slotEls.forEach((s, k) => {
@@ -1668,6 +1929,7 @@
     J.nodes = r.nodes;
     J.byAlgo = true;
     if (reduced()) { flipMove(() => { J.slot = r.asg.slice(); }); return; }
+    closeDd(false);
     J.busy = true;
     renderJadwal();
     let p = 0;
@@ -1681,6 +1943,7 @@
   });
 
   function resetJadwal() {
+    closeDd(false);
     clearTimeout(J.timer);
     J.busy = false;
     J.moves = 0;
@@ -1859,6 +2122,146 @@
     renderRek();
   }
 
+  /* ================= REKOMENDASI: CONTENT-BASED ================= */
+  const FEATS = ["Berkuah", "Pedas", "Bumbu kacang", "Daging", "Sayuran", "Digoreng"];
+  const CB_RATED = [
+    { n: "Rawon", f: [1, 0, 0, 1, 0, 0] },
+    { n: "Lontong Balap", f: [1, 0, 0, 0, 1, 1] },
+    { n: "Rujak Cingur", f: [0, 1, 1, 1, 1, 0] },
+    { n: "Tahu Tek", f: [0, 1, 1, 0, 1, 1] },
+    { n: "Sate Klopo", f: [0, 0, 0, 1, 0, 0] },
+    { n: "Nasi Bebek", f: [0, 1, 0, 1, 0, 1] },
+  ];
+  const CB_CAND = [
+    { n: "Lontong Kupang", f: [1, 1, 0, 0, 0, 0] },
+    { n: "Soto Lamongan", f: [1, 0, 0, 1, 1, 0] },
+    { n: "Tahu Campur", f: [1, 1, 0, 1, 1, 1] },
+    { n: "Pecel Semanggi", f: [0, 1, 1, 0, 1, 0] },
+  ];
+  const CB_START = [1, 0, -1, 0, 1, 1];
+  const CB_OPTS = [{ v: -1, t: "Tidak" }, { v: 0, t: "Netral" }, { v: 1, t: "Suka" }];
+  const CB = { pref: CB_START.slice() };
+  const featList = (f) => FEATS.filter((_, k) => f[k]).join(" · ");
+
+  const prefList = $("prefList");
+  const prefSyncs = CB_RATED.map((item, i) => {
+    const row = document.createElement("div");
+    row.className = "pref-row";
+    const nid = "cbf-" + i;
+    row.innerHTML = `<span class="pref-name"><b id="${nid}">${item.n}</b><small>${featList(item.f)}</small></span>`;
+    const g = document.createElement("div");
+    g.className = "tri";
+    g.setAttribute("role", "radiogroup");
+    g.setAttribute("aria-labelledby", nid);
+    const btns = CB_OPTS.map((o) => {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.setAttribute("role", "radio");
+      b.dataset.v = String(o.v);
+      b.textContent = o.t;
+      b.addEventListener("click", () => { CB.pref[i] = o.v; sync(); renderCbf(); });
+      g.appendChild(b);
+      return b;
+    });
+    const sync = () => btns.forEach((b, k) => {
+      const on = CB_OPTS[k].v === CB.pref[i];
+      b.setAttribute("aria-checked", on ? "true" : "false");
+      b.tabIndex = on ? 0 : -1;
+    });
+    g.addEventListener("keydown", (e) => {
+      const cur = CB_OPTS.findIndex((o) => o.v === CB.pref[i]);
+      let k = null;
+      if (e.key === "ArrowRight" || e.key === "ArrowDown") k = Math.min(cur + 1, 2);
+      else if (e.key === "ArrowLeft" || e.key === "ArrowUp") k = Math.max(cur - 1, 0);
+      else if (e.key === "Home") k = 0;
+      else if (e.key === "End") k = 2;
+      if (k === null) return;
+      e.preventDefault();
+      CB.pref[i] = CB_OPTS[k].v;
+      sync();
+      btns[k].focus();
+      renderCbf();
+    });
+    sync();
+    row.appendChild(g);
+    prefList.appendChild(row);
+    return sync;
+  });
+
+  const profBars = $("profBars");
+  const profRows = FEATS.map((name) => {
+    const row = document.createElement("div");
+    row.className = "prof-row";
+    row.setAttribute("role", "listitem");
+    row.innerHTML = `<span class="sim-name">${name}</span><span class="sim-track"><span class="sim-neg"></span><span class="sim-pos"></span></span><span class="sim-val"></span>`;
+    profBars.appendChild(row);
+    return row;
+  });
+
+  const CB_H = 62;
+  const cbfRecs = $("cbfRecs");
+  const cbfRows = CB_CAND.map((item) => {
+    const li = document.createElement("li");
+    li.className = "pred pred-tall";
+    li.innerHTML = `<span class="pred-name"><b><span class="rank"></span>${item.n}</b><small>${featList(item.f)}</small></span><span class="pred-track"><span class="pred-fill"></span></span><span class="pred-val"></span>`;
+    cbfRecs.appendChild(li);
+    return li;
+  });
+
+  const norm = (v) => Math.sqrt(v.reduce((s, x) => s + x * x, 0));
+  const dot = (a, b) => a.reduce((s, x, k) => s + x * b[k], 0);
+
+  function renderCbf() {
+    // Profil = jumlah vektor fitur makanan yang disukai dikurangi yang tidak disukai.
+    const prof = FEATS.map((_, k) => CB_RATED.reduce((s, item, i) => s + CB.pref[i] * item.f[k], 0));
+    const maxAbs = Math.max(1, ...prof.map(Math.abs));
+    profRows.forEach((row, k) => {
+      const w = prof[k];
+      row.querySelector(".sim-pos").style.transform = `scaleX(${Math.max(w, 0) / maxAbs})`;
+      row.querySelector(".sim-neg").style.transform = `scaleX(${Math.max(-w, 0) / maxAbs})`;
+      row.querySelector(".sim-val").textContent = (w > 0 ? "+" : w < 0 ? "−" : "") + Math.abs(w);
+      row.setAttribute("aria-label", `${FEATS[k]}, bobot ${w}`);
+    });
+
+    const pn = norm(prof);
+    const cold = pn === 0;
+    $("cbfCold").hidden = !cold;
+    cbfRecs.hidden = cold;
+    const why = $("cbfWhy");
+    if (cold) {
+      why.textContent = "Tanpa preferensi, sistem belum memiliki profil untuk dicocokkan. Setelah satu makanan ditandai, rekomendasi langsung muncul tanpa perlu data pengguna lain.";
+      return;
+    }
+
+    const sims = CB_CAND.map((item) => dot(prof, item.f) / (pn * norm(item.f)));
+    const order = CB_CAND.map((_, j) => j).sort((a, b) => sims[b] - sims[a] || a - b);
+    order.forEach((j, rank) => {
+      const li = cbfRows[j];
+      li.style.transform = `translateY(${rank * CB_H}px)`;
+      li.classList.toggle("is-first", rank === 0);
+      li.querySelector(".rank").textContent = rank + 1 + ". ";
+      li.querySelector(".pred-fill").style.transform = `scaleX(${Math.max(sims[j], 0)})`;
+      li.querySelector(".pred-val").textContent = signed2(sims[j]);
+      li.setAttribute("aria-label", `Peringkat ${rank + 1}: ${CB_CAND[j].n}, kecocokan ${signed2(sims[j])}`);
+    });
+
+    const top = order[0];
+    const f = CB_CAND[top].f;
+    const good = FEATS.filter((_, k) => f[k] && prof[k] > 0).map((x) => x.toLowerCase());
+    const bad = FEATS.filter((_, k) => f[k] && prof[k] < 0).map((x) => x.toLowerCase());
+    let txt = `<strong>${CB_CAND[top].n}</strong> paling cocok (${signed2(sims[top])}). `;
+    txt += good.length ? `Fitur yang sesuai profil Anda: ${joinAnd(good)}. ` : "Tidak ada fitur yang secara khusus Anda sukai. ";
+    if (bad.length) txt += `Fitur yang kurang Anda sukai: ${joinAnd(bad)}. `;
+    txt += "Metode ini tidak membutuhkan data pengguna lain.";
+    why.innerHTML = txt;
+  }
+
+  function resetCbf() {
+    CB.pref = CB_START.slice();
+    prefSyncs.forEach((s) => s());
+    renderCbf();
+  }
+
   /* ================= Reset semua ================= */
   $("resetAll").addEventListener("click", () => {
     resetRute();
@@ -1866,6 +2269,7 @@
     renderHard();
     resetJadwal();
     resetRek();
+    resetCbf();
   });
 
   /* ================= Mulai ================= */
@@ -1879,6 +2283,7 @@
   initNum($("jNodes"), "–");
   renderJadwal();
   renderRek();
+  renderCbf();
 })();
 </script>
 </body>
