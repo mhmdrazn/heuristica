@@ -937,7 +937,6 @@
         </div>
         <div class="cell">
           <div class="btn-row">
-            <button class="btn btn-sm btn-primary" id="jSolve" type="button" style="flex: 1 1 auto"><i class="ico" data-icon="play"></i>Jalankan backtracking</button>
             <button class="btn btn-sm" id="jReset" type="button" style="flex: 0 1 auto"><i class="ico" data-icon="undo"></i>Jadwal awal</button>
           </div>
           <div class="cell-head"><p class="note" id="jCompare"></p><span class="badge" id="jChallengeBadge" hidden></span></div>
@@ -1413,8 +1412,9 @@
       $("rAlgoSub").textContent = a.label;
     }
     const running = !!(a && !a.done);
+    btn.hidden = !!(a && a.done);
     btn.disabled = running;
-    btn.querySelector("span").textContent = a && a.done ? "Jalankan ulang" : running ? "Sedang berjalan" : "Jalankan algoritma";
+    btn.querySelector("span").textContent = running ? "Sedang berjalan" : "Jalankan algoritma";
     $("rTime").textContent = R.compute !== null && a && a.done
       ? `Waktu komputasi: ${nfMax2.format(R.compute)} ms (rata-rata 200 eksekusi tanpa animasi).`
       : "Clarke-Wright Savings membentuk trip, kemudian 2-opt memperbaiki urutan setiap trip.";
@@ -1884,7 +1884,6 @@
     }).join("");
     hydrateIcons($("checklist"));
 
-    $("jSolve").disabled = J.busy;
     $("jCompare").textContent = J.nodes === null
       ? "Brute force harus memeriksa hingga 5⁹ = 1.953.125 kombinasi."
       : `Brute force: hingga 5⁹ = 1.953.125 kombinasi. Backtracking: cukup ${nfInt.format(J.nodes)} node.`;
@@ -1922,25 +1921,6 @@
     const found = bt(0);
     return { found, asg, nodes, order };
   }
-
-  $("jSolve").addEventListener("click", () => {
-    const r = solveCSP();
-    if (!r.found) return;
-    J.nodes = r.nodes;
-    J.byAlgo = true;
-    if (reduced()) { flipMove(() => { J.slot = r.asg.slice(); }); return; }
-    closeDd(false);
-    J.busy = true;
-    renderJadwal();
-    let p = 0;
-    const step = () => {
-      if (p >= r.order.length) { J.busy = false; renderJadwal(); return; }
-      const i = r.order[p++];
-      flipMove(() => { J.slot[i] = r.asg[i]; });
-      J.timer = setTimeout(step, 150);
-    };
-    step();
-  });
 
   function resetJadwal() {
     closeDd(false);
