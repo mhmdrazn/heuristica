@@ -873,7 +873,6 @@
           </div>
         </div>
         <div class="cell">
-          <button class="btn btn-primary btn-block" id="rRun" type="button"><i class="ico" data-icon="play"></i><span>Jalankan algoritma</span></button>
           <p class="note" id="rTime"></p>
           <div class="verdict" id="rVerdict" role="status" aria-live="polite"></div>
         </div>
@@ -1400,7 +1399,6 @@
 
   function renderAlgo() {
     const a = R.algo;
-    const btn = $("rRun");
     if (!a) {
       $("algoPath").setAttribute("d", "");
       setNum($("rAlgoVal"), "–");
@@ -1411,10 +1409,6 @@
       setNum($("rAlgoVal"), km(algoTotal(a.routes)));
       $("rAlgoSub").textContent = a.label;
     }
-    const running = !!(a && !a.done);
-    btn.hidden = !!(a && a.done);
-    btn.disabled = running;
-    btn.querySelector("span").textContent = running ? "Sedang berjalan" : "Jalankan algoritma";
     $("rTime").textContent = R.compute !== null && a && a.done
       ? `Waktu komputasi: ${nfMax2.format(R.compute)} ms (rata-rata 200 eksekusi tanpa animasi).`
       : "Clarke-Wright Savings membentuk trip, kemudian 2-opt memperbaiki urutan setiap trip.";
@@ -1511,26 +1505,6 @@
     for (let i = 0; i < runs; i++) solveVRP(false);
     return (performance.now() - t0) / runs;
   }
-
-  $("rRun").addEventListener("click", () => {
-    stopAlgo();
-    R.compute = measure();
-    const res = solveVRP(true);
-    const finish = () => {
-      R.algo = { routes: res.routes, label: `selesai · ${res.steps} langkah · ${res.routes.length} trip`, done: true };
-      renderRute();
-    };
-    if (reduced()) { finish(); return; }
-    let i = 0;
-    const tick = () => {
-      if (i >= res.frames.length) { finish(); return; }
-      const f = res.frames[i++];
-      R.algo = { routes: f.routes, label: f.label, done: false };
-      renderRute();
-      R.timer = setTimeout(tick, f.delay);
-    };
-    tick();
-  });
 
   function resetRute() {
     stopAlgo();
